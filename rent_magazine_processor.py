@@ -1,16 +1,6 @@
 #!/usr/bin/env python3
 """
 Rent Magazine — Phase 1 Image Processing Automation
-====================================================
-Processes property listing photos:
-  - Camera Raw adjustments (Exposure +0.60, Contrast -16, Highlights -50,
-    Shadows -4, Whites +50, Blacks +100) matching the Photoshop action PDF
-  - Logo overlay at 45% opacity with orientation-aware positioning (regular only)
-  - THETA 360° panoramic images auto-detected via EXIF or 2:1 aspect ratio
-  - Output files renamed: ManagementID_PropertyName_Room_ImageType_Sequence.jpg
-  - SUUMO folder structure created automatically
-  - Processing log (JSON) saved alongside output
-
 CLI usage:
   python3 rent_magazine_processor.py \\
     --input ./photos --logo ./logo.png --output ./output \\
@@ -57,9 +47,9 @@ def is_image(path: Path) -> bool:
     return path.suffix.lower() in SUPPORTED
 
 
-# ─────────────────────────────────────────────────────────────
+# 
 # THETA Auto-Detection
-# ─────────────────────────────────────────────────────────────
+# 
 
 def is_theta_image(img: Image.Image, path: Path) -> bool:
     """
@@ -84,12 +74,12 @@ def is_theta_image(img: Image.Image, path: Path) -> bool:
     return w > h and abs(w / h - 2.0) < 0.03
 
 
-# ─────────────────────────────────────────────────────────────
+# 
 # Camera Raw Adjustments
 # Matches Photoshop Camera Raw filter settings from action PDF:
 #   Exposure +0.60 | Contrast -16 | Highlights -50
 #   Shadows -4     | Whites +50   | Blacks +100
-# ─────────────────────────────────────────────────────────────
+
 
 def apply_camera_raw(img_pil: Image.Image) -> Image.Image:
     img_rgb = img_pil.convert("RGB")
@@ -107,13 +97,13 @@ def apply_camera_raw(img_pil: Image.Image) -> Image.Image:
     return Image.fromarray(arr, "RGB")
 
 
-# ─────────────────────────────────────────────────────────────
+# 
 # Logo Overlay
 # Placement specs from Photoshop action PDF:
 #   Portrait  → scale 221.6%, offset (-716.3px, -1726.3px) from center
 #   Landscape → scale 257.7%, offset (-1112.4px, -1253.1px) from center
 #   Opacity: 45%
-# ─────────────────────────────────────────────────────────────
+# 
 
 def apply_logo(img_pil: Image.Image, logo_pil: Image.Image) -> Image.Image:
     img  = img_pil.convert("RGBA")
@@ -143,9 +133,9 @@ def apply_logo(img_pil: Image.Image, logo_pil: Image.Image) -> Image.Image:
     return img.convert("RGB")
 
 
-# ─────────────────────────────────────────────────────────────
+# 
 # Folder Structure
-# ─────────────────────────────────────────────────────────────
+# 
 
 def build_output_path(base_output: Path, city: str, property_name: str,
                        room: str, is_theta: bool,
@@ -166,9 +156,9 @@ def build_output_path(base_output: Path, city: str, property_name: str,
     return path
 
 
-# ─────────────────────────────────────────────────────────────
+# 
 # File Naming
-# ─────────────────────────────────────────────────────────────
+# 
 
 def next_sequence(out_path: Path, management_number: str,
                   property_name: str, room: str, image_type: str) -> int:
@@ -193,9 +183,9 @@ def build_output_filename(management_number: str, property_name: str,
     return "_".join(p for p in parts if p) + ".jpg"
 
 
-# ─────────────────────────────────────────────────────────────
+# 
 # Main Processing Pipeline
-# ─────────────────────────────────────────────────────────────
+# 
 
 def process_images(
     input_dir: Path,
@@ -355,9 +345,9 @@ def process_images(
     return results
 
 
-# ─────────────────────────────────────────────────────────────
+# 
 # CLI Entry Point
-# ─────────────────────────────────────────────────────────────
+# 
 
 def main():
     parser = argparse.ArgumentParser(

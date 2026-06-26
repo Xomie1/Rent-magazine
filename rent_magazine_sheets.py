@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
 """
 Rent Magazine — Google Sheets Integration
-==========================================
-Read-only client for the 物件管理番号マスター sheet via a Service Account credential file.
-
-Required sheet columns (header row must match exactly):
-  Management Number | Type | Property Name | Building | Room/Unit |
-  City/Ward | Hiragana Group | Nearest Station |
-  WordPress Post ID | WordPress URL | Status | Notes
-
 Management number format:
   Residential → RM-R000001
   Tenant      → RM-T000001

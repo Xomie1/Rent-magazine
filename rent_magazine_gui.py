@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """
-Rent Magazine — Phase 1 Desktop GUI (PyQt5)
+Rent Magazine - Phase 1 Desktop GUI (PyQt5)
 物件写真処理システム
-
-All user-facing text is in Japanese.
-Code identifiers and comments stay in English.
 """
 
 import sys
@@ -60,9 +57,9 @@ DEFAULTS = {
     "last_station":           "",
 }
 
-# ─────────────────────────────────────────────────────────────
+# 
 # Application Stylesheet
-# ─────────────────────────────────────────────────────────────
+# 
 
 STYLESHEET = """
 QGroupBox {
@@ -230,9 +227,9 @@ _BTN_PRIMARY = (
 )
 
 
-# ─────────────────────────────────────────────────────────────
+# 
 # Settings Manager
-# ─────────────────────────────────────────────────────────────
+# 
 
 class SettingsManager:
     """Read/write config.json in the same directory as this script."""
@@ -265,9 +262,9 @@ class SettingsManager:
             print(f"設定の保存に失敗しました: {e}")
 
 
-# ─────────────────────────────────────────────────────────────
+# 
 # Background Worker Thread
-# ─────────────────────────────────────────────────────────────
+# 
 
 class ProcessingWorker(QThread):
     progress_signal  = pyqtSignal(int, int, str, str, str)
@@ -290,9 +287,9 @@ class ProcessingWorker(QThread):
         self.progress_signal.emit(current, total, source, output, status)
 
 
-# ─────────────────────────────────────────────────────────────
+# 
 # Main Application Window
-# ─────────────────────────────────────────────────────────────
+# 
 
 class RentMagazineApp(QMainWindow):
 
@@ -303,7 +300,7 @@ class RentMagazineApp(QMainWindow):
         self.last_failed: list = []
         self._worker: ProcessingWorker = None
 
-        self.setWindowTitle("Rent Magazine — 物件写真処理システム")
+        self.setWindowTitle("Rent Magazine")
         self.resize(1060, 960)
         self.setMinimumSize(860, 720)
 
@@ -322,7 +319,7 @@ class RentMagazineApp(QMainWindow):
 
         status_bar = QStatusBar()
         self.setStatusBar(status_bar)
-        status_bar.showMessage("準備完了  —  Rent Magazine Phase 1")
+        status_bar.showMessage("準備完了")
 
         # Auto-connect to Sheets if saved credentials exist
         creds = self.settings.get("credentials_path")
@@ -1097,9 +1094,9 @@ class RentMagazineApp(QMainWindow):
         self._log_err.clear()
 
 
-# ─────────────────────────────────────────────────────────────
+# 
 # Entry Point
-# ─────────────────────────────────────────────────────────────
+# 
 
 def main():
     app = QApplication(sys.argv)
