@@ -152,7 +152,8 @@ def build_output_filename(mgmt: str, prop: str, room: str, img_type: str, seq: i
 
 # ── Main pipeline ──────────────────────────────────────────────────────────────
 
-ProgressCallback = Callable[..., None]  # (current, total, src, out, status, *, step="", temp_path="")
+ProgressCallback = Callable[[int, int, str, str, str, str], None]  # (current, total, src, out, status, temp_path)
+StepCallback     = Callable[[str], None]                           # (step_name)
 
 
 def process_images(
@@ -168,6 +169,7 @@ def process_images(
     station:           str = "",
     verbose:           bool = True,
     progress_callback: Optional[ProgressCallback] = None,
+    step_callback:     Optional[StepCallback] = None,
     retry_files:       Optional[List] = None,
 ) -> dict:
     """
@@ -183,6 +185,8 @@ def process_images(
         raise FileNotFoundError(f"Logo not found: {logo_path}")
 
     logo   = Image.open(logo_path).convert("RGBA")
+    if retry_files is not None and not isinstance(retry_files, (list, tuple)):
+        retry_files = None
     images = (sorted(Path(f) for f in retry_files if is_image(Path(f)))
               if retry_files is not None
               else sorted(f for f in input_dir.iterdir() if is_image(f)))
@@ -209,19 +213,19 @@ def process_images(
             theta = is_theta_image(img, img_path)
 
             # リネーム: determine output filename (uses formula path for seq count before mkdir)
-            if progress_callback: progress_callback(i, len(images), str(img_path), "", "", step="リネーム")
+            if step_callback: step_callback("リネーム")
             expected_dir = _output_subpath(output_dir, city, property_name, room, theta, hiragana, station)
             ftype        = "THETA" if theta else image_type
             seq          = _next_sequence(expected_dir, management_number, property_name, room, ftype)
             out_name     = build_output_filename(management_number, property_name, room, ftype, seq)
 
             # 振り分け: build and create output folder
-            if progress_callback: progress_callback(i, len(images), str(img_path), "", "", step="振り分け")
+            if step_callback: step_callback("振り分け")
             out_dir  = build_output_path(output_dir, city, property_name, room, theta, hiragana, station)
             out_file = out_dir / out_name
 
             # レタッチ: apply Camera Raw adjustments
-            if progress_callback: progress_callback(i, len(images), str(img_path), "", "", step="レタッチ")
+            if step_callback: step_callback("レタッチ")
             proc = apply_camera_raw(img)
 
             if not theta:
@@ -235,11 +239,11 @@ def process_images(
                     tmp_path = ""
 
                 # ロゴ挿入: apply logo overlay
-                if progress_callback: progress_callback(i, len(images), str(img_path), "", "", step="ロゴ挿入")
+                if step_callback: step_callback("ロゴ挿入")
                 proc = apply_logo(proc, logo)
 
             # JPG保存: save final output
-            if progress_callback: progress_callback(i, len(images), str(img_path), "", "", step="JPG保存")
+            if step_callback: step_callback("JPG保存")
             proc.save(str(out_file), "JPEG", quality=30, optimize=True)
 
             if theta:
@@ -250,7 +254,7 @@ def process_images(
 
             if verbose:           print(f"✅  →  {out_name}")
             if progress_callback: progress_callback(i, len(images), str(img_path), str(out_file), "✅",
-                                                    temp_path=tmp_path)
+                                                    tmp_path)
 
         except Exception as e:
             if tmp_path:
@@ -260,7 +264,7 @@ def process_images(
                     pass
             results["failed"].append({"file": str(img_path), "error": str(e)})
             if verbose:           print(f"❌  {e}")
-            if progress_callback: progress_callback(i, len(images), str(img_path), "", f"❌ {e}")
+            if progress_callback: progress_callback(i, len(images), str(img_path), "", f"❌ {e}", "")
 
     end = datetime.now()
     results["end_time"] = end.isoformat()

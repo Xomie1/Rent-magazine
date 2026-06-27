@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 import time
+import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -61,8 +62,11 @@ class ProcessingWorker(QThread):
         try:
             self._run_pipeline()
         except Exception as e:
+            tb = traceback.format_exc()
             self.error_signal.emit(str(e))
             self._log("ERROR", f"致命的エラー: {e}")
+            for line in tb.strip().splitlines():
+                self._log("ERROR", line)
         finally:
             self._stop.set()
 
@@ -83,18 +87,11 @@ class ProcessingWorker(QThread):
 
     def _on_file(self, current: int, total: int,
                  src: str, out: str, status: str,
-                 temp_path: str = "", step: str = "") -> None:
-        """progress_callback passed to process_images."""
+                 temp_path: str = "") -> None:
+        """progress_callback passed to process_images (completion / error events only)."""
         while self._pause.is_set() and not self._stop.is_set():
             time.sleep(0.05)
         if self._stop.is_set():
-            return
-
-        if step:
-            try:
-                self._emit_step(step, STEPS.index(step))
-            except ValueError:
-                pass
             return
 
         ok  = "✅" in status
@@ -112,6 +109,13 @@ class ProcessingWorker(QThread):
 
         self.progress_signal.emit(current, total, src, out, temp_path)
         self.stats_signal.emit(dict(self._stats))
+
+    def _on_step(self, step: str) -> None:
+        """step_callback passed to process_images."""
+        try:
+            self._emit_step(step, STEPS.index(step))
+        except ValueError:
+            pass
 
     def _emit_step(self, name: str, idx: int) -> None:
         self.step_signal.emit(name, idx)
@@ -166,6 +170,7 @@ class ProcessingWorker(QThread):
             hiragana=p.get("hiragana", ""), station=p.get("station", ""),
             verbose=False,
             progress_callback=self._on_file,
+            step_callback=self._on_step,
             retry_files=self.retry_files,
         )
 

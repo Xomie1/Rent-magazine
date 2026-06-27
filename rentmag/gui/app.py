@@ -200,7 +200,7 @@ class RentMagApp(QMainWindow):
         row1 = QHBoxLayout()
         row1.setSpacing(4)
         self._start_btn = btn("▶  処理開始", "btn-primary")
-        self._start_btn.clicked.connect(self._start_processing)
+        self._start_btn.clicked.connect(lambda _: self._start_processing())
         row1.addWidget(self._start_btn, 2)
         self._pause_btn = btn("⏸", "btn-pause")
         self._pause_btn.setFixedWidth(34)
