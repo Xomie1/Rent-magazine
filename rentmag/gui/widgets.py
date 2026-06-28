@@ -59,7 +59,7 @@ class StepBadge(QLabel):
         super().__init__(parent)
         self._label = step_label
         self._state = "pending"
-        self.setFixedSize(87, 69)
+        self.setFixedSize(90, 76)
 
     def setState(self, state: str) -> None:
         if self._state != state:
@@ -70,7 +70,7 @@ class StepBadge(QLabel):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
 
-        cx, cy, r = self.width() // 2, 24, 18
+        cx, cy, r = self.width() // 2, 23, 21  # 42 px diameter circle
 
         if self._state == "done":
             bg_c, sym, lbl_c = QColor(SUCCESS), "✓", QColor(SUCCESS)
@@ -87,12 +87,12 @@ class StepBadge(QLabel):
         p.drawEllipse(cx - r, cy - r, r * 2, r * 2)
 
         p.setPen(QPen(fg_c))
-        p.setFont(QFont("Segoe UI", 12, QFont.Bold))
+        p.setFont(QFont("Segoe UI", 16, QFont.Bold))  # ~21px symbol
         p.drawText(cx - r, cy - r, r * 2, r * 2, Qt.AlignCenter, sym)
 
         p.setPen(QPen(lbl_c))
-        p.setFont(QFont("Segoe UI", 10))
-        p.drawText(0, cy + r + 3, self.width(), 21, Qt.AlignCenter, self._label)
+        p.setFont(QFont("Segoe UI", 14))              # ~19px label
+        p.drawText(0, cy + r + 6, self.width(), 26, Qt.AlignCenter, self._label)
         p.end()
 
 

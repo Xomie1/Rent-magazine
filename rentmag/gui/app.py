@@ -75,14 +75,14 @@ class RentMagApp(QMainWindow):
     def _build_topbar(self) -> QFrame:
         bar = QFrame()
         bar.setObjectName("topbar")
-        bar.setFixedHeight(62)
+        bar.setFixedHeight(54)
 
         lay = QHBoxLayout(bar)
         lay.setContentsMargins(16, 0, 16, 0)
         lay.setSpacing(10)
 
         t = label("RentMag", "topbar-title")
-        t.setFont(QFont("Segoe UI", 20, QFont.Bold))
+        t.setFont(QFont("Segoe UI", 22, QFont.Bold))
         lay.addWidget(t)
         lay.addStretch()
 
@@ -100,7 +100,7 @@ class RentMagApp(QMainWindow):
     def _build_left_panel(self) -> QWidget:
         panel = QWidget()
         panel.setObjectName("left-panel")
-        panel.setFixedWidth(340)
+        panel.setFixedWidth(430)
 
         # Inner scroll so narrow panel never clips
         scroll = QScrollArea()
@@ -113,7 +113,7 @@ class RentMagApp(QMainWindow):
         inner = QWidget()
         inner.setObjectName("left-panel")
         lay = QVBoxLayout(inner)
-        lay.setContentsMargins(14, 12, 14, 12)
+        lay.setContentsMargins(12, 6, 12, 6)
         lay.setSpacing(0)
 
         lay.addWidget(self._panel_section("物件情報"))
@@ -138,13 +138,13 @@ class RentMagApp(QMainWindow):
     def _panel_section(self, text: str) -> QLabel:
         l = QLabel(text.upper())
         l.setObjectName("panel-heading")
-        l.setContentsMargins(0, 10, 0, 4)
+        l.setContentsMargins(0, 5, 0, 2)
         return l
 
     def _panel_sep(self) -> QFrame:
         f = QFrame()
         f.setObjectName("panel-sep")
-        f.setContentsMargins(0, 8, 0, 8)
+        f.setContentsMargins(0, 3, 0, 3)
         return f
 
     def _build_property_form(self) -> QWidget:
@@ -153,8 +153,8 @@ class RentMagApp(QMainWindow):
         lay = QGridLayout(w)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setHorizontalSpacing(6)
-        lay.setVerticalSpacing(4)
-        lay.setColumnMinimumWidth(0, 110)
+        lay.setVerticalSpacing(2)
+        lay.setColumnMinimumWidth(0, 140)
         lay.setColumnStretch(1, 1)
 
         self._pf: dict = {}
@@ -198,18 +198,25 @@ class RentMagApp(QMainWindow):
 
         # Start / Pause / Stop
         row1 = QHBoxLayout()
-        row1.setSpacing(4)
+        row1.setSpacing(12)
         self._start_btn = btn("▶  処理開始", "btn-start")
-        self._start_btn.setMinimumHeight(56)
+        self._start_btn.setMinimumHeight(60)
+        self._start_btn.setStyleSheet(
+            f"QPushButton {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+            f" stop:0 {SUCCESS}, stop:1 #2F7A3E); color: white; border: none;"
+            f" border-radius: 10px; padding: 9px 24px; font-size: 21px; font-weight: 700; }}"
+            f"QPushButton:hover {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+            f" stop:0 #2F7A3E, stop:1 #265F32); }}"
+        )
         self._start_btn.clicked.connect(lambda _: self._start_processing())
         row1.addWidget(self._start_btn, 2)
         self._pause_btn = btn("⏸", "btn-pause")
-        self._pause_btn.setFixedSize(56, 56)
+        self._pause_btn.setFixedSize(60, 60)
         self._pause_btn.setEnabled(False)
         self._pause_btn.clicked.connect(self._toggle_pause)
         row1.addWidget(self._pause_btn)
         self._stop_btn = btn("■", "btn-stop")
-        self._stop_btn.setFixedSize(56, 56)
+        self._stop_btn.setFixedSize(60, 60)
         self._stop_btn.setEnabled(False)
         self._stop_btn.clicked.connect(self._stop_processing)
         row1.addWidget(self._stop_btn)
@@ -228,8 +235,8 @@ class RentMagApp(QMainWindow):
         self._output_path_lbl = QLabel("-")
         self._output_path_lbl.setWordWrap(True)
         self._output_path_lbl.setStyleSheet(f"""
-            background: #DADDE3; border-radius: 3px;
-            padding: 4px 6px; color: {TEXT2}; font-size: 15px;
+            background: {CARD}; border: 1px solid {BORDER}; border-radius: 7px;
+            padding: 9px 12px; color: {TEXT2}; font-size: 16px;
         """)
         lay.addWidget(self._output_path_lbl)
 
@@ -353,18 +360,12 @@ class RentMagApp(QMainWindow):
         lay.addWidget(sep)
 
         badges = QHBoxLayout()
-        badges.setSpacing(0)
+        badges.setSpacing(4)
         self._step_badges: list = []
-        for i, name in enumerate(STEPS):
+        for name in STEPS:
             badge = StepBadge(name)
             self._step_badges.append(badge)
             badges.addWidget(badge, 1)
-            if i < len(STEPS) - 1:
-                conn = label("─")
-                conn.setStyleSheet(f"color: {MUTED}; margin-bottom: 12px;")
-                conn.setAlignment(Qt.AlignCenter)
-                conn.setFixedWidth(18)
-                badges.addWidget(conn)
         lay.addLayout(badges)
 
         return w
@@ -441,7 +442,7 @@ class RentMagApp(QMainWindow):
             col.setSpacing(4)
             lbl = label(title, "field-label")
             lbl.setAlignment(Qt.AlignCenter)
-            lbl.setStyleSheet(f"color: {TEXT1}; font-weight: 800; font-size: 20px;")
+            lbl.setStyleSheet(f"color: {TEXT1}; font-weight: 800; font-size: 22px;")
             col.addWidget(lbl)
             img = PreviewImage(title)
             col.addWidget(img)
@@ -602,7 +603,25 @@ class RentMagApp(QMainWindow):
         }
 
     def _set_running(self, running: bool) -> None:
-        self._start_btn.setEnabled(not running)
+        if running:
+            self._start_btn.setText("⏸  処理中…")
+            self._start_btn.setEnabled(False)
+            self._start_btn.setStyleSheet(
+                "QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+                " stop:0 #3F8A4D, stop:1 #2F7A3E); color: white; border: none;"
+                " border-radius: 10px; padding: 9px 24px;"
+                " font-size: 21px; font-weight: 700; }"
+            )
+        else:
+            self._start_btn.setText("▶  処理開始")
+            self._start_btn.setEnabled(True)
+            self._start_btn.setStyleSheet(
+                f"QPushButton {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+                f" stop:0 {SUCCESS}, stop:1 #2F7A3E); color: white; border: none;"
+                f" border-radius: 10px; padding: 9px 24px; font-size: 21px; font-weight: 700; }}"
+                f"QPushButton:hover {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+                f" stop:0 #2F7A3E, stop:1 #265F32); }}"
+            )
         self._pause_btn.setEnabled(running)
         self._stop_btn.setEnabled(running)
         self._retry_btn.setEnabled(not running and bool(self._failed_files))
