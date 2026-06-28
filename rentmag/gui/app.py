@@ -49,7 +49,7 @@ class RentMagApp(QMainWindow):
         self._log_rows:     list                      = []
 
         self.setWindowTitle("RentMag")
-        self.setMinimumSize(1080, 720)
+        self.setMinimumSize(1024, 680)
         self.resize(1280, 840)
         self.setStyleSheet(QSS)
 
@@ -100,7 +100,8 @@ class RentMagApp(QMainWindow):
     def _build_left_panel(self) -> QWidget:
         panel = QWidget()
         panel.setObjectName("left-panel")
-        panel.setFixedWidth(430)
+        panel.setMinimumWidth(280)
+        panel.setMaximumWidth(400)
 
         # Inner scroll so narrow panel never clips
         scroll = QScrollArea()
@@ -282,6 +283,7 @@ class RentMagApp(QMainWindow):
 
     def _build_right_panel(self) -> QWidget:
         panel = QWidget()
+        panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         panel.setStyleSheet(f"background: {BG};")
         lay = QVBoxLayout(panel)
         lay.setSpacing(6)
@@ -306,7 +308,7 @@ class RentMagApp(QMainWindow):
     def _build_progress_section(self) -> QWidget:
         w = QWidget()
         w.setStyleSheet("background: transparent;")
-        w.setMinimumHeight(240)
+        w.setMinimumHeight(160)
         lay = QVBoxLayout(w)
         lay.setContentsMargins(20, 14, 20, 14)
         lay.setSpacing(6)
@@ -316,7 +318,7 @@ class RentMagApp(QMainWindow):
         top.setSpacing(14)
         self._pct_label = label("0%", "pct-label")
         self._pct_label.setFont(QFont("Segoe UI", 39, QFont.Bold))
-        self._pct_label.setFixedWidth(108)
+        self._pct_label.setMinimumWidth(108)
         top.addWidget(self._pct_label)
 
         bar_col = QVBoxLayout()
@@ -383,7 +385,13 @@ class RentMagApp(QMainWindow):
         hdr.addStretch()
         self._log_filter = QComboBox()
         self._log_filter.addItems(["すべて", "INFO", "WARN", "ERROR"])
-        self._log_filter.setFixedWidth(130)
+        self._log_filter.setMaximumWidth(100)
+        self._log_filter.setStyleSheet(
+            "QComboBox { font-size: 13px; min-height: 0; padding: 3px 8px;"
+            " border: 1px solid #D4DAE1; border-radius: 5px; background: white; }"
+            "QComboBox::drop-down { border: none; width: 12px; }"
+            "QComboBox QAbstractItemView { background: white; font-size: 13px; }"
+        )
         self._log_filter.currentTextChanged.connect(self._rebuild_log_table)
         hdr.addWidget(self._log_filter)
         lay.addLayout(hdr)
@@ -458,7 +466,8 @@ class RentMagApp(QMainWindow):
         # Right: ファイル情報 panel
         info_frame = QFrame()
         info_frame.setObjectName("file-info-panel")
-        info_frame.setFixedWidth(360)
+        info_frame.setMinimumWidth(200)
+        info_frame.setMaximumWidth(360)
         info_frame.setStyleSheet(f"""
             QFrame#file-info-panel {{
                 background: #F3F5F7;
