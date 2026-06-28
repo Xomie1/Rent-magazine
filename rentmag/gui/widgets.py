@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt5.QtWidgets import QFrame, QLabel, QPushButton, QLineEdit
+from PyQt5.QtWidgets import QFrame, QLabel, QPushButton, QLineEdit, QSizePolicy
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QPixmap, QColor, QPainter, QPen, QBrush
 
@@ -59,7 +59,7 @@ class StepBadge(QLabel):
         super().__init__(parent)
         self._label = step_label
         self._state = "pending"
-        self.setFixedSize(58, 46)
+        self.setFixedSize(87, 69)
 
     def setState(self, state: str) -> None:
         if self._state != state:
@@ -70,7 +70,7 @@ class StepBadge(QLabel):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
 
-        cx, cy, r = self.width() // 2, 16, 12
+        cx, cy, r = self.width() // 2, 24, 18
 
         if self._state == "done":
             bg_c, sym, lbl_c = QColor(SUCCESS), "✓", QColor(SUCCESS)
@@ -87,27 +87,30 @@ class StepBadge(QLabel):
         p.drawEllipse(cx - r, cy - r, r * 2, r * 2)
 
         p.setPen(QPen(fg_c))
-        p.setFont(QFont("Segoe UI", 8, QFont.Bold))
+        p.setFont(QFont("Segoe UI", 12, QFont.Bold))
         p.drawText(cx - r, cy - r, r * 2, r * 2, Qt.AlignCenter, sym)
 
         p.setPen(QPen(lbl_c))
-        p.setFont(QFont("Segoe UI", 7))
-        p.drawText(0, cy + r + 2, self.width(), 14, Qt.AlignCenter, self._label)
+        p.setFont(QFont("Segoe UI", 10))
+        p.drawText(0, cy + r + 3, self.width(), 21, Qt.AlignCenter, self._label)
         p.end()
 
 
 # ── Preview image slot ─────────────────────────────────────────────────────────
 
 class PreviewImage(QLabel):
-    """Fixed-size image preview that shows a placeholder until an image is loaded."""
+    """Horizontally-expanding image preview that shows a placeholder until an image is loaded."""
 
-    W, H = 175, 118
+    _H = 200  # fixed height; width is determined by layout
 
     def __init__(self, title: str, parent=None):
         super().__init__(parent)
         self._title = title
-        self.setFixedSize(self.W, self.H)
+        self._src_pixmap: QPixmap | None = None
         self.setAlignment(Qt.AlignCenter)
+        self.setFixedHeight(self._H)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setMinimumWidth(100)
         self._apply_empty_style()
         self.setText(f"({title})")
 
@@ -115,17 +118,26 @@ class PreviewImage(QLabel):
         self.setStyleSheet(f"""
             QLabel {{
                 border: 1px solid {BORDER}; border-radius: 3px;
-                background: #EAECF0; color: {MUTED}; font-size: 10px;
+                background: #EAECF0; color: {MUTED}; font-size: 15px;
             }}
         """)
 
     def setImage(self, pixmap: QPixmap) -> None:
+        self._src_pixmap = pixmap
         self.setPixmap(
-            pixmap.scaled(self.W, self.H, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            pixmap.scaled(self.width(), self._H, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         )
         self.setStyleSheet(f"QLabel {{ border: 1px solid {BORDER}; border-radius: 3px; }}")
 
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        if self._src_pixmap is not None:
+            self.setPixmap(
+                self._src_pixmap.scaled(self.width(), self._H, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            )
+
     def clearImage(self) -> None:
+        self._src_pixmap = None
         self.clear()
         self.setText(f"({self._title})")
         self._apply_empty_style()

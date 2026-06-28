@@ -75,19 +75,19 @@ class RentMagApp(QMainWindow):
     def _build_topbar(self) -> QFrame:
         bar = QFrame()
         bar.setObjectName("topbar")
-        bar.setFixedHeight(42)
+        bar.setFixedHeight(62)
 
         lay = QHBoxLayout(bar)
         lay.setContentsMargins(16, 0, 16, 0)
         lay.setSpacing(10)
 
         t = label("RentMag", "topbar-title")
-        t.setFont(QFont("Segoe UI", 13, QFont.Bold))
+        t.setFont(QFont("Segoe UI", 20, QFont.Bold))
         lay.addWidget(t)
         lay.addStretch()
 
         self._conn_label = label("", "conn-label")
-        self._conn_label.setStyleSheet("color: rgba(255,255,255,0.55); font-size: 10px;")
+        self._conn_label.setStyleSheet("color: rgba(255,255,255,0.55); font-size: 15px;")
         lay.addWidget(self._conn_label)
 
         cfg = btn("設定", "btn-topbar")
@@ -100,7 +100,7 @@ class RentMagApp(QMainWindow):
     def _build_left_panel(self) -> QWidget:
         panel = QWidget()
         panel.setObjectName("left-panel")
-        panel.setFixedWidth(258)
+        panel.setFixedWidth(340)
 
         # Inner scroll so narrow panel never clips
         scroll = QScrollArea()
@@ -154,7 +154,7 @@ class RentMagApp(QMainWindow):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setHorizontalSpacing(6)
         lay.setVerticalSpacing(4)
-        lay.setColumnMinimumWidth(0, 78)
+        lay.setColumnMinimumWidth(0, 110)
         lay.setColumnStretch(1, 1)
 
         self._pf: dict = {}
@@ -199,16 +199,17 @@ class RentMagApp(QMainWindow):
         # Start / Pause / Stop
         row1 = QHBoxLayout()
         row1.setSpacing(4)
-        self._start_btn = btn("▶  処理開始", "btn-primary")
+        self._start_btn = btn("▶  処理開始", "btn-start")
+        self._start_btn.setMinimumHeight(56)
         self._start_btn.clicked.connect(lambda _: self._start_processing())
         row1.addWidget(self._start_btn, 2)
         self._pause_btn = btn("⏸", "btn-pause")
-        self._pause_btn.setFixedWidth(34)
+        self._pause_btn.setFixedSize(56, 56)
         self._pause_btn.setEnabled(False)
         self._pause_btn.clicked.connect(self._toggle_pause)
         row1.addWidget(self._pause_btn)
         self._stop_btn = btn("■", "btn-stop")
-        self._stop_btn.setFixedWidth(34)
+        self._stop_btn.setFixedSize(56, 56)
         self._stop_btn.setEnabled(False)
         self._stop_btn.clicked.connect(self._stop_processing)
         row1.addWidget(self._stop_btn)
@@ -228,7 +229,7 @@ class RentMagApp(QMainWindow):
         self._output_path_lbl.setWordWrap(True)
         self._output_path_lbl.setStyleSheet(f"""
             background: #DADDE3; border-radius: 3px;
-            padding: 4px 6px; color: {TEXT2}; font-size: 10px;
+            padding: 4px 6px; color: {TEXT2}; font-size: 15px;
         """)
         lay.addWidget(self._output_path_lbl)
 
@@ -262,9 +263,9 @@ class RentMagApp(QMainWindow):
             lay.addWidget(label(lbl_t, "stat-lbl"), r, 0)
             v = label("0", "stat-num")
             if color:
-                v.setStyleSheet(f"color: {color}; font-size: 12px; font-weight: 700;")
+                v.setStyleSheet(f"color: {color}; font-size: 18px; font-weight: 700;")
             else:
-                v.setStyleSheet("font-size: 12px; font-weight: 600;")
+                v.setStyleSheet("font-size: 18px; font-weight: 600;")
             lay.addWidget(v, r, 1, Qt.AlignRight)
             self._stat_labels[key] = v
 
@@ -298,7 +299,7 @@ class RentMagApp(QMainWindow):
     def _build_progress_section(self) -> QWidget:
         w = QWidget()
         w.setStyleSheet("background: transparent;")
-        w.setFixedHeight(170)
+        w.setMinimumHeight(240)
         lay = QVBoxLayout(w)
         lay.setContentsMargins(20, 14, 20, 14)
         lay.setSpacing(6)
@@ -307,28 +308,28 @@ class RentMagApp(QMainWindow):
         top = QHBoxLayout()
         top.setSpacing(14)
         self._pct_label = label("0%", "pct-label")
-        self._pct_label.setFont(QFont("Segoe UI", 26, QFont.Bold))
-        self._pct_label.setFixedWidth(72)
+        self._pct_label.setFont(QFont("Segoe UI", 39, QFont.Bold))
+        self._pct_label.setFixedWidth(108)
         top.addWidget(self._pct_label)
 
         bar_col = QVBoxLayout()
         bar_col.setSpacing(3)
         self._progress_bar = QProgressBar()
         self._progress_bar.setRange(0, 100)
-        self._progress_bar.setFixedHeight(8)
+        self._progress_bar.setFixedHeight(12)
         bar_col.addWidget(self._progress_bar)
 
         times_row = QHBoxLayout()
         el = label("経過", "field-label")
         times_row.addWidget(el)
         self._elapsed_label = QLabel("00:00:00")
-        self._elapsed_label.setStyleSheet(f"color: {TEXT1}; font-size: 11px; font-weight: 600;")
+        self._elapsed_label.setStyleSheet(f"color: {TEXT1}; font-size: 17px; font-weight: 600;")
         times_row.addWidget(self._elapsed_label)
         times_row.addStretch()
         eta_l = label("残り", "field-label")
         times_row.addWidget(eta_l)
         self._eta_label = QLabel("-")
-        self._eta_label.setStyleSheet(f"color: {TEXT2}; font-size: 11px;")
+        self._eta_label.setStyleSheet(f"color: {TEXT2}; font-size: 17px;")
         times_row.addWidget(self._eta_label)
         bar_col.addLayout(times_row)
         top.addLayout(bar_col, 1)
@@ -337,11 +338,11 @@ class RentMagApp(QMainWindow):
         # Current file + step
         info = QHBoxLayout()
         self._file_label = QLabel("-")
-        self._file_label.setStyleSheet(f"color: {TEXT2}; font-size: 10px;")
+        self._file_label.setStyleSheet(f"color: {TEXT2}; font-size: 15px;")
         self._file_label.setWordWrap(False)
         info.addWidget(self._file_label, 1)
         self._step_label = QLabel("-")
-        self._step_label.setStyleSheet(f"color: {ACCENT2}; font-size: 10px; font-weight: 600;")
+        self._step_label.setStyleSheet(f"color: {ACCENT2}; font-size: 15px; font-weight: 600;")
         self._step_label.setAlignment(Qt.AlignRight)
         info.addWidget(self._step_label)
         lay.addLayout(info)
@@ -362,7 +363,7 @@ class RentMagApp(QMainWindow):
                 conn = label("─")
                 conn.setStyleSheet(f"color: {MUTED}; margin-bottom: 12px;")
                 conn.setAlignment(Qt.AlignCenter)
-                conn.setFixedWidth(12)
+                conn.setFixedWidth(18)
                 badges.addWidget(conn)
         lay.addLayout(badges)
 
@@ -381,7 +382,7 @@ class RentMagApp(QMainWindow):
         hdr.addStretch()
         self._log_filter = QComboBox()
         self._log_filter.addItems(["すべて", "INFO", "WARN", "ERROR"])
-        self._log_filter.setFixedWidth(90)
+        self._log_filter.setFixedWidth(130)
         self._log_filter.currentTextChanged.connect(self._rebuild_log_table)
         hdr.addWidget(self._log_filter)
         lay.addLayout(hdr)
@@ -419,51 +420,84 @@ class RentMagApp(QMainWindow):
     def _build_preview_section(self) -> QWidget:
         w = QWidget()
         w.setStyleSheet("background: transparent;")
-        w.setFixedHeight(252)
         lay = QVBoxLayout(w)
         lay.setContentsMargins(16, 10, 16, 10)
         lay.setSpacing(6)
 
         lay.addWidget(label("プレビュー", "section-title"))
 
-        img_row = QHBoxLayout()
-        img_row.setSpacing(6)
+        content_row = QHBoxLayout()
+        content_row.setSpacing(12)
+
+        # Left: three image columns grouped tightly
+        images_widget = QWidget()
+        images_widget.setStyleSheet("background: transparent;")
+        images_lay = QHBoxLayout(images_widget)
+        images_lay.setContentsMargins(0, 0, 0, 0)
+        images_lay.setSpacing(8)
 
         def _col(title: str, attr: str):
             col = QVBoxLayout()
-            col.setSpacing(3)
+            col.setSpacing(4)
             lbl = label(title, "field-label")
             lbl.setAlignment(Qt.AlignCenter)
+            lbl.setStyleSheet(f"color: {TEXT1}; font-weight: 800; font-size: 20px;")
             col.addWidget(lbl)
             img = PreviewImage(title)
-            col.addWidget(img, alignment=Qt.AlignCenter)
+            col.addWidget(img)
             setattr(self, attr, img)
             return col
 
-        img_row.addLayout(_col("元画像",    "_prev_orig"))
-        img_row.addLayout(_col("レタッチ後", "_prev_ret"))
-        img_row.addLayout(_col("ロゴ挿入後", "_prev_final"))
-        lay.addLayout(img_row)
+        images_lay.addLayout(_col("元画像",    "_prev_orig"))
+        images_lay.addLayout(_col("レタッチ後", "_prev_ret"))
+        images_lay.addLayout(_col("ロゴ挿入後", "_prev_final"))
 
-        # File info
-        sep = QFrame()
-        sep.setObjectName("right-sep-h")
-        lay.addWidget(sep)
+        content_row.addWidget(images_widget, 1)
+
+        # Right: ファイル情報 panel
+        info_frame = QFrame()
+        info_frame.setObjectName("file-info-panel")
+        info_frame.setFixedWidth(360)
+        info_frame.setStyleSheet(f"""
+            QFrame#file-info-panel {{
+                background: #F3F5F7;
+                border: 1px solid {BORDER};
+                border-radius: 4px;
+            }}
+        """)
+        info_inner = QVBoxLayout(info_frame)
+        info_inner.setContentsMargins(12, 10, 12, 10)
+        info_inner.setSpacing(8)
+
+        info_hdr = label("ファイル情報", "section-title")
+        info_hdr.setStyleSheet(
+            f"color: {ACCENT}; font-size: 18px; font-weight: 700;"
+            f"border-bottom: 1px solid {BORDER}; padding-bottom: 8px;"
+        )
+        info_inner.addWidget(info_hdr)
 
         info_grid = QGridLayout()
-        info_grid.setSpacing(3)
-        info_grid.setColumnMinimumWidth(0, 58)
+        info_grid.setHorizontalSpacing(12)
+        info_grid.setVerticalSpacing(9)
+        info_grid.setColumnMinimumWidth(0, 90)
+        info_grid.setColumnStretch(1, 1)
         self._file_info: dict = {}
         for r, (lt, key) in enumerate([
             ("ファイル名", "filename"), ("種別",  "type"),
             ("解像度",    "resolution"), ("向き", "orientation"), ("サイズ", "size"),
         ]):
-            info_grid.addWidget(label(lt, "field-label"), r, 0)
+            info_grid.addWidget(label(lt, "field-label"), r, 0, Qt.AlignTop)
             v = label("-")
+            v.setWordWrap(True)
+            v.setStyleSheet(f"color: {TEXT1}; font-size: 17px; font-weight: 600;")
+            v.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             info_grid.addWidget(v, r, 1)
             self._file_info[key] = v
-        lay.addLayout(info_grid)
-        lay.addStretch()
+        info_inner.addLayout(info_grid)
+        info_inner.addStretch()
+
+        content_row.addWidget(info_frame)
+        lay.addLayout(content_row, 1)
         return w
 
     # ── Property persistence ──────────────────────────────────────────────────
@@ -506,10 +540,10 @@ class RentMagApp(QMainWindow):
     def _refresh_conn_label(self) -> None:
         if self.settings.get("last_input_dir") and self.settings.get("last_logo_path"):
             self._conn_label.setText("設定済み")
-            self._conn_label.setStyleSheet("color: rgba(180,255,180,0.75); font-size: 10px;")
+            self._conn_label.setStyleSheet("color: rgba(180,255,180,0.75); font-size: 15px;")
         else:
             self._conn_label.setText("ファイル未設定")
-            self._conn_label.setStyleSheet("color: rgba(255,200,100,0.85); font-size: 10px;")
+            self._conn_label.setStyleSheet("color: rgba(255,200,100,0.85); font-size: 15px;")
 
     # ── Dialogs ───────────────────────────────────────────────────────────────
 
