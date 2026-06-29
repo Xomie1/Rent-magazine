@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Dict
 
 from PyQt5.QtWidgets import (
@@ -154,22 +155,35 @@ class FileSettingsDialog(QDialog):
 
     # ── File pickers ───────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _start_dir(saved: str) -> str:
+        return saved if saved else str(Path.home())
+
     def _pick_creds(self) -> None:
         f, _ = QFileDialog.getOpenFileName(
-            self, "認証情報ファイル", self.settings.get("credentials_path"), "JSON (*.json)")
+            self, "認証情報ファイル",
+            self._start_dir(self.settings.get("credentials_path")),
+            "JSON (*.json)")
         if f:
             self.creds_edit.setText(f)
 
     def _pick_input(self) -> None:
-        d = QFileDialog.getExistingDirectory(self, "投入フォルダ", self.settings.get("last_input_dir"))
+        d = QFileDialog.getExistingDirectory(
+            self, "投入フォルダ",
+            self._start_dir(self.settings.get("last_input_dir")))
         if d: self.input_edit.setText(d)
 
     def _pick_logo(self) -> None:
-        f, _ = QFileDialog.getOpenFileName(self, "ロゴファイル", self.settings.get("last_logo_path"), "PNG (*.png)")
+        f, _ = QFileDialog.getOpenFileName(
+            self, "ロゴファイル",
+            self._start_dir(self.settings.get("last_logo_path")),
+            "PNG (*.png)")
         if f: self.logo_edit.setText(f)
 
     def _pick_output(self) -> None:
-        d = QFileDialog.getExistingDirectory(self, "出力フォルダ", self.settings.get("last_output_dir"))
+        d = QFileDialog.getExistingDirectory(
+            self, "出力フォルダ",
+            self._start_dir(self.settings.get("last_output_dir")))
         if d: self.output_edit.setText(d)
 
     # ── Sheets ─────────────────────────────────────────────────────────────────
