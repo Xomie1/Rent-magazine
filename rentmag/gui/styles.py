@@ -2,9 +2,9 @@
 """Design tokens and application stylesheet."""
 
 # ── Palette ────────────────────────────────────────────────────────────────────
-BG         = "#E9EBEE"       # main background
-PANEL_BG   = "#F6F7F9"       # left panel
-PANEL_BDR  = "#E2E6EA"       # left panel right edge
+BG         = "#E9EBEE"
+PANEL_BG   = "#F6F7F9"
+PANEL_BDR  = "#E2E6EA"
 CARD       = "#FFFFFF"
 BORDER     = "#E2E6EA"
 ACCENT     = "#1A56A0"
@@ -25,16 +25,28 @@ STEPS: list[str] = ["検出", "リネーム", "振り分け", "レタッチ", "�
 QSS = f"""
 * {{
     font-family: "Meiryo", "Meiryo UI", "Yu Gothic UI", "MS UI Gothic", sans-serif;
-    font-size: 17px;
     color: {TEXT1};
 }}
-QMainWindow, QWidget   {{ background: {BG}; }}
-QDialog                {{ background: {BG}; }}
+QMainWindow, QWidget {{ background: {BG}; }}
+QDialog               {{ background: {BG}; }}
 
-/* ── Left panel ────────────────────────────────────────────────────── */
-QWidget#left-panel {{
+/* ── Header ─────────────────────────────────────────────────────────── */
+#appHeader {{
+    background: #27384A;
+    border: none;
+}}
+#appHeader QLabel {{
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    background: transparent;
+}}
+
+/* ── Sidebar ────────────────────────────────────────────────────────── */
+#sidebar {{
     background: {PANEL_BG};
-    border-right: 1px solid {PANEL_BDR};
+    border: 1px solid {PANEL_BDR};
+    border-radius: 8px;
 }}
 QFrame#panel-sep {{
     background: {PANEL_BDR};
@@ -42,75 +54,59 @@ QFrame#panel-sep {{
     max-height: 1px;
     min-height: 1px;
 }}
-QLabel#panel-heading {{
-    color: {TEXT2};
-    font-size: 16px;
-    font-weight: 700;
-    background: transparent;
-}}
-
-/* ── Top bar ────────────────────────────────────────────────────────── */
-QFrame#topbar {{
-    background: #27384A;
-    border: none;
-}}
-QLabel#topbar-title {{
-    color: white;
-    font-size: 22px;
-    font-weight: 700;
-    background: transparent;
-}}
-QLabel#conn-label {{ font-size: 15px; background: transparent; }}
 
 /* ── Generic labels ─────────────────────────────────────────────────── */
 QLabel {{ background: transparent; }}
-QLabel#section-title {{ color: {TEXT1}; font-size: 20px; font-weight: 700; }}
-QLabel#field-label   {{ color: {TEXT2}; font-size: 14px; }}
-QLabel#stat-lbl      {{ color: {TEXT2}; font-size: 16px; }}
-QLabel#stat-num      {{ font-size: 20px; font-weight: 700; }}
-QLabel#pct-label     {{ color: {TEXT1}; font-size: 39px; font-weight: 800; }}
+QLabel#sectionTitle {{ color: #3A4757; font-size: 14px; font-weight: 700; }}
+QLabel#fieldLabel   {{ color: #6B7787; font-size: 12px; }}
+QLabel#stat-lbl     {{ color: {TEXT2}; font-size: 13px; }}
+QLabel#stat-num     {{ font-size: 14px; font-weight: 700; }}
+QLabel#pct-label    {{ color: {TEXT1}; font-size: 28px; font-weight: 800; }}
+QLabel#conn-label   {{ font-size: 13px; background: transparent; }}
 
 /* ── Right panel cards ──────────────────────────────────────────────── */
 QFrame#right-card {{
     background: {CARD};
     border: 1px solid {BORDER};
-    border-radius: 10px;
+    border-radius: 8px;
+}}
+QFrame#log-frame {{
+    border: 1px solid {BORDER};
+    border-radius: 6px;
+    background: {CARD};
 }}
 
-/* ── Buttons ────────────────────────────────────────────────────────── */
-QPushButton {{ outline: none; }}
+/* ── Buttons (generic default) ──────────────────────────────────────── */
+QPushButton {{
+    outline: none;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 5px;
+    border: 1px solid #C7CED6;
+    background: #EEF1F4;
+    color: #33414F;
+}}
 
-QPushButton#btn-primary {{
-    background: {ACCENT2};
-    color: white;
+/* run / start button */
+QPushButton#runBtn {{
+    background: #2F7A3E;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
     border: none;
     border-radius: 7px;
-    padding: 9px 24px;
-    font-size: 18px;
-    font-weight: 600;
+    min-height: 40px;
 }}
-QPushButton#btn-primary:hover    {{ background: {ACCENT}; }}
-QPushButton#btn-primary:disabled {{ background: #BDBDBD; color: white; }}
-
-QPushButton#btn-start {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #3F8A4D, stop:1 #2F7A3E);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    padding: 9px 24px;
-    font-size: 21px;
-    font-weight: 700;
-}}
-QPushButton#btn-start:hover    {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #2F7A3E, stop:1 #265F32); }}
-QPushButton#btn-start:disabled {{ background: #BDBDBD; color: white; }}
+QPushButton#runBtn:hover    {{ background: #3F8A4D; }}
+QPushButton#runBtn:disabled {{ background: #BDBDBD; color: white; border: none; }}
 
 QPushButton#btn-pause {{
     background: #FFFFFF;
     color: #37475A;
     border: 2px solid #C2C9D2;
-    border-radius: 10px;
-    padding: 6px;
-    font-size: 24px;
+    border-radius: 7px;
+    padding: 4px;
+    font-size: 16px;
     font-weight: 700;
 }}
 QPushButton#btn-pause:hover    {{ background: #F1F4F8; border-color: #97A2AE; }}
@@ -120,9 +116,9 @@ QPushButton#btn-stop {{
     background: #FFFFFF;
     color: {ERROR};
     border: 2px solid #E0B4B4;
-    border-radius: 10px;
-    padding: 6px;
-    font-size: 22px;
+    border-radius: 7px;
+    padding: 4px;
+    font-size: 14px;
     font-weight: 700;
 }}
 QPushButton#btn-stop:hover    {{ background: #FBEEEE; border-color: #CF8F8F; }}
@@ -132,9 +128,9 @@ QPushButton#btn-secondary {{
     background: transparent;
     color: {TEXT1};
     border: 1px solid {BORDER};
-    border-radius: 7px;
-    padding: 8px 15px;
-    font-size: 17px;
+    border-radius: 5px;
+    padding: 5px 12px;
+    font-size: 13px;
 }}
 QPushButton#btn-secondary:hover    {{ background: {CARD}; }}
 QPushButton#btn-secondary:disabled {{ color: {MUTED}; border-color: {BORDER}; }}
@@ -143,8 +139,8 @@ QPushButton#btn-link {{
     background: transparent;
     color: {ACCENT2};
     border: none;
-    padding: 5px 0;
-    font-size: 16px;
+    padding: 4px 0;
+    font-size: 13px;
     text-align: left;
 }}
 QPushButton#btn-link:hover {{ color: {ACCENT}; }}
@@ -153,22 +149,22 @@ QPushButton#btn-topbar {{
     background: rgba(255,255,255,0.12);
     color: white;
     border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 7px;
-    padding: 8px 18px;
-    font-size: 18px;
+    border-radius: 5px;
+    padding: 5px 14px;
+    font-size: 13px;
 }}
 QPushButton#btn-topbar:hover {{ background: rgba(255,255,255,0.22); }}
 
 /* ── Progress bar ───────────────────────────────────────────────────── */
 QProgressBar {{
     border: none;
-    border-radius: 6px;
+    border-radius: 5px;
     background: #E7EBF0;
-    height: 12px;
+    height: 10px;
     color: transparent;
 }}
 QProgressBar::chunk {{
-    border-radius: 6px;
+    border-radius: 5px;
     background: {ACCENT2};
 }}
 
@@ -178,11 +174,11 @@ QTableWidget {{
     background: {CARD};
     outline: none;
     gridline-color: {BORDER};
-    font-size: 16px;
+    font-size: 13px;
     selection-background-color: #DBEAFE;
     selection-color: {TEXT1};
 }}
-QTableWidget::item          {{ padding: 12px 16px; border-bottom: 1px solid {BORDER}; }}
+QTableWidget::item          {{ padding: 7px 12px; border-bottom: 1px solid {BORDER}; }}
 QTableWidget::item:selected {{ background: #DBEAFE; color: {TEXT1}; }}
 QHeaderView::section {{
     background: #F3F5F7;
@@ -190,54 +186,46 @@ QHeaderView::section {{
     border: none;
     border-right: 1px solid {BORDER};
     border-bottom: 1px solid {BORDER};
-    padding: 11px 16px;
-    font-size: 15px;
+    padding: 7px 12px;
+    font-size: 12px;
     font-weight: 600;
-}}
-QFrame#log-frame {{
-    border: 1px solid {BORDER};
-    border-radius: 8px;
-    background: {CARD};
 }}
 
 /* ── Inputs ─────────────────────────────────────────────────────────── */
 QComboBox {{
     border: 1px solid #D4DAE1;
-    border-radius: 7px;
-    padding: 9px 12px;
+    border-radius: 5px;
+    padding: 5px 10px;
     background: {CARD};
-    font-size: 18px;
-    min-height: 42px;
+    font-size: 13px;
+    min-height: 28px;
 }}
 QComboBox:focus             {{ border-color: {ACCENT2}; }}
-QComboBox::drop-down        {{ border: none; width: 16px; }}
-QComboBox QAbstractItemView {{ background: {CARD}; border: 1px solid {BORDER}; }}
+QComboBox::drop-down        {{ border: none; width: 14px; }}
+QComboBox QAbstractItemView {{ background: {CARD}; border: 1px solid {BORDER}; font-size: 13px; }}
 
 QLineEdit {{
+    font-size: 13px;
+    color: #2C3A49;
+    background: #FFFFFF;
     border: 1px solid #D4DAE1;
-    border-radius: 7px;
-    padding: 9px 12px;
-    background: {CARD};
-    font-size: 18px;
-    min-height: 42px;
+    border-radius: 5px;
+    padding: 6px 9px;
+    min-height: 18px;
 }}
 QLineEdit:focus     {{ border-color: {ACCENT2}; }}
 QLineEdit:read-only {{ background: #F9FAFB; color: {TEXT2}; }}
-QLineEdit#prop-field         {{ border: 1px solid #D4DAE1; border-radius: 7px;
-                                padding: 4px 10px; background: {CARD}; font-size: 15px;
-                                min-height: 30px; }}
-QLineEdit#prop-field:focus   {{ border-color: {ACCENT2}; background: #FAFCFF; }}
 
 /* ── Scrollbars ─────────────────────────────────────────────────────── */
 QScrollBar:vertical, QScrollBar:horizontal {{
     background: transparent;
 }}
-QScrollBar:vertical   {{ width: 8px; }}
-QScrollBar:horizontal {{ height: 8px; }}
+QScrollBar:vertical   {{ width: 6px; }}
+QScrollBar:horizontal {{ height: 6px; }}
 QScrollBar::handle:vertical, QScrollBar::handle:horizontal {{
     background: #BEC3CB;
-    border-radius: 4px;
-    min-height: 24px;
+    border-radius: 3px;
+    min-height: 20px;
 }}
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
@@ -247,9 +235,9 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
 /* ── Dialogs ────────────────────────────────────────────────────────── */
 QGroupBox {{
     border: 1px solid {BORDER};
-    border-radius: 10px;
-    margin-top: 14px;
-    font-size: 18px;
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 14px;
     font-weight: 600;
     color: {ACCENT2};
 }}
@@ -259,6 +247,9 @@ QGroupBox::title {{
     left: 8px;
     padding: 1px 5px;
     background: {BG};
+    font-size: 14px;
+    font-weight: 700;
+    color: #3A4757;
 }}
-QRadioButton {{ spacing: 6px; background: transparent; color: {TEXT1}; font-size: 17px; }}
+QRadioButton {{ spacing: 6px; background: transparent; color: {TEXT1}; font-size: 13px; }}
 """

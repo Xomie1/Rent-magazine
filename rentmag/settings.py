@@ -1,9 +1,14 @@
 """User settings persistence (config.json)."""
 
 import json
+import sys
 from pathlib import Path
 
-CONFIG_FILE = Path(__file__).parent.parent / "config.json"
+if getattr(sys, "frozen", False):
+    # Running as a PyInstaller bundle — put config.json next to the .exe
+    CONFIG_FILE = Path(sys.executable).parent / "config.json"
+else:
+    CONFIG_FILE = Path(__file__).parent.parent / "config.json"
 
 DEFAULTS: dict = {
     # Google Sheets

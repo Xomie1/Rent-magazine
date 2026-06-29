@@ -14,6 +14,7 @@ if sys.platform == "win32":
         pass
 
 from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtGui import QFont
 
 try:
     from rentmag.gui import RentMagApp
@@ -34,6 +35,7 @@ def main() -> None:
 
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    app.setFont(QFont("Segoe UI", 9))
 
     if not _import_ok:
         QMessageBox.critical(

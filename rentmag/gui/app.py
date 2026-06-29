@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from PyQt5.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout,
     QLabel, QScrollArea, QFrame, QProgressBar, QComboBox,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QFileDialog, QMessageBox, QDialog, QSizePolicy,
@@ -36,17 +36,17 @@ from rentmag.gui.dialogs import FileSettingsDialog
 class RentMagApp(QMainWindow):
     """
     Two-panel single-page layout:
-      Left panel  (fixed 260 px) — property inputs, controls, summary
+      Left panel  (fixed 300 px) — property inputs, controls, summary
       Right area  (flexible)     — progress, log, preview
     """
 
     def __init__(self):
         super().__init__()
-        self.settings:      SettingsManager           = SettingsManager()
+        self.settings:      SettingsManager            = SettingsManager()
         self._worker:       Optional[ProcessingWorker] = None
-        self._paused:       bool                      = False
-        self._failed_files: list                      = []
-        self._log_rows:     list                      = []
+        self._paused:       bool                       = False
+        self._failed_files: list                       = []
+        self._log_rows:     list                       = []
 
         self.setWindowTitle("RentMag")
         self.setMinimumSize(1024, 680)
@@ -62,8 +62,8 @@ class RentMagApp(QMainWindow):
         vl.addWidget(self._build_topbar())
 
         body = QHBoxLayout()
-        body.setSpacing(0)
-        body.setContentsMargins(0, 0, 0, 0)
+        body.setSpacing(14)
+        body.setContentsMargins(14, 14, 14, 14)
         body.addWidget(self._build_left_panel())
         body.addWidget(self._build_right_panel(), 1)
         vl.addLayout(body, 1)
@@ -74,20 +74,19 @@ class RentMagApp(QMainWindow):
 
     def _build_topbar(self) -> QFrame:
         bar = QFrame()
-        bar.setObjectName("topbar")
-        bar.setFixedHeight(54)
+        bar.setObjectName("appHeader")
+        bar.setFixedHeight(48)
 
         lay = QHBoxLayout(bar)
         lay.setContentsMargins(16, 0, 16, 0)
         lay.setSpacing(10)
 
-        t = label("RentMag", "topbar-title")
-        t.setFont(QFont("Segoe UI", 22, QFont.Bold))
+        t = label("RentMag", "")
         lay.addWidget(t)
         lay.addStretch()
 
         self._conn_label = label("", "conn-label")
-        self._conn_label.setStyleSheet("color: rgba(255,255,255,0.55); font-size: 15px;")
+        self._conn_label.setStyleSheet("color: rgba(255,255,255,0.55); font-size: 13px;")
         lay.addWidget(self._conn_label)
 
         cfg = btn("設定", "btn-topbar")
@@ -99,23 +98,22 @@ class RentMagApp(QMainWindow):
 
     def _build_left_panel(self) -> QWidget:
         panel = QWidget()
-        panel.setObjectName("left-panel")
-        panel.setMinimumWidth(280)
-        panel.setMaximumWidth(400)
+        panel.setObjectName("sidebar")
+        panel.setFixedWidth(300)
 
-        # Inner scroll so narrow panel never clips
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        scroll.viewport().setStyleSheet("background: transparent;")
 
         inner = QWidget()
-        inner.setObjectName("left-panel")
+        inner.setStyleSheet("background: transparent;")
         lay = QVBoxLayout(inner)
-        lay.setContentsMargins(12, 6, 12, 6)
-        lay.setSpacing(0)
+        lay.setContentsMargins(14, 14, 14, 14)
+        lay.setSpacing(8)
 
         lay.addWidget(self._panel_section("物件情報"))
         lay.addWidget(self._build_property_form())
@@ -137,56 +135,66 @@ class RentMagApp(QMainWindow):
         return panel
 
     def _panel_section(self, text: str) -> QLabel:
-        l = QLabel(text.upper())
-        l.setObjectName("panel-heading")
-        l.setContentsMargins(0, 5, 0, 2)
+        l = QLabel(text)
+        l.setObjectName("sectionTitle")
         return l
 
     def _panel_sep(self) -> QFrame:
         f = QFrame()
         f.setObjectName("panel-sep")
-        f.setContentsMargins(0, 3, 0, 3)
         return f
 
     def _build_property_form(self) -> QWidget:
         w = QWidget()
         w.setStyleSheet("background: transparent;")
-        lay = QGridLayout(w)
+
+        vlay = QVBoxLayout(w)
+        vlay.setContentsMargins(0, 0, 0, 0)
+        vlay.setSpacing(0)
+
+        form_w = QWidget()
+        form_w.setStyleSheet("background: transparent;")
+        lay = QFormLayout(form_w)
         lay.setContentsMargins(0, 0, 0, 0)
-        lay.setHorizontalSpacing(6)
-        lay.setVerticalSpacing(2)
-        lay.setColumnMinimumWidth(0, 140)
-        lay.setColumnStretch(1, 1)
+        lay.setHorizontalSpacing(12)
+        lay.setVerticalSpacing(8)
+        lay.setLabelAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
         self._pf: dict = {}
 
-        def row(r, lbl_text, key, placeholder=""):
-            lay.addWidget(label(lbl_text, "field-label"), r, 0)
+        def row(lbl_text: str, key: str, placeholder: str = "") -> None:
+            lbl = QLabel(lbl_text)
+            lbl.setObjectName("fieldLabel")
+            lbl.setFixedWidth(100)
+            lbl.setWordWrap(True)
+            if len(lbl_text) >= 8:
+                lbl.setStyleSheet("font-size: 11px; color: #6b7787;")
             f = prop_field(placeholder)
-            lay.addWidget(f, r, 1)
+            lay.addRow(lbl, f)
             self._pf[key] = f
 
-        row(0,  "管理番号",         "prop_mgmt",  "RM-R000001")
-        row(1,  "物件名",           "prop_name",  "物件名")
-        row(2,  "棟",               "prop_build", "北棟")
-        row(3,  "号室 / 区画",      "prop_room",  "101")
-        row(4,  "表示名",           "prop_disp",  "")
-        row(5,  "種別",             "prop_type",  "住居")
-        row(6,  "所在地",           "prop_addr",  "市区町村")
-        row(7,  "ステータス",       "prop_sta_s", "募集中")
-        row(8,  "ひらがな(名古屋)", "prop_hira",  "さ")
-        row(9,  "最寄駅(名古屋)",   "prop_sta",   "栄")
-        row(10, "画像種別",         "prop_itype", "リビング")
-        row(11, "備考",             "prop_notes", "")
+        row("管理番号",         "prop_mgmt",  "RM-R000001")
+        row("物件名",           "prop_name",  "物件名")
+        row("棟",               "prop_build", "北棟")
+        row("号室 / 区画",      "prop_room",  "101")
+        row("表示名",           "prop_disp",  "")
+        row("種別",             "prop_type",  "住居")
+        row("所在地",           "prop_addr",  "市区町村")
+        row("ステータス",       "prop_sta_s", "募集中")
+        row("ひらがな(名古屋)", "prop_hira",  "さ")
+        row("最寄駅(名古屋)",   "prop_sta",   "栄")
+        row("画像種別",         "prop_itype", "リビング")
+        row("備考",             "prop_notes", "")
 
-        # Save button below form
+        vlay.addWidget(form_w)
+
         save_row = QHBoxLayout()
-        save_row.setContentsMargins(0, 6, 0, 0)
+        save_row.setContentsMargins(0, 8, 0, 0)
         sb = btn("保存", "btn-secondary")
         sb.clicked.connect(self._save_property_fields)
         save_row.addWidget(sb)
         save_row.addStretch()
-        lay.addLayout(save_row, 12, 0, 1, 2)
+        vlay.addLayout(save_row)
 
         return w
 
@@ -199,25 +207,21 @@ class RentMagApp(QMainWindow):
 
         # Start / Pause / Stop
         row1 = QHBoxLayout()
-        row1.setSpacing(12)
-        self._start_btn = btn("▶  処理開始", "btn-start")
-        self._start_btn.setMinimumHeight(60)
-        self._start_btn.setStyleSheet(
-            f"QPushButton {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
-            f" stop:0 {SUCCESS}, stop:1 #2F7A3E); color: white; border: none;"
-            f" border-radius: 10px; padding: 9px 24px; font-size: 21px; font-weight: 700; }}"
-            f"QPushButton:hover {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
-            f" stop:0 #2F7A3E, stop:1 #265F32); }}"
-        )
+        row1.setSpacing(8)
+
+        self._start_btn = btn("▶  処理開始", "runBtn")
+        self._start_btn.setMinimumHeight(40)
         self._start_btn.clicked.connect(lambda _: self._start_processing())
-        row1.addWidget(self._start_btn, 2)
+        row1.addWidget(self._start_btn, 1)
+
         self._pause_btn = btn("⏸", "btn-pause")
-        self._pause_btn.setFixedSize(60, 60)
+        self._pause_btn.setFixedSize(42, 42)
         self._pause_btn.setEnabled(False)
         self._pause_btn.clicked.connect(self._toggle_pause)
         row1.addWidget(self._pause_btn)
+
         self._stop_btn = btn("■", "btn-stop")
-        self._stop_btn.setFixedSize(60, 60)
+        self._stop_btn.setFixedSize(42, 42)
         self._stop_btn.setEnabled(False)
         self._stop_btn.clicked.connect(self._stop_processing)
         row1.addWidget(self._stop_btn)
@@ -228,16 +232,15 @@ class RentMagApp(QMainWindow):
         self._retry_btn.clicked.connect(self._retry_failed)
         lay.addWidget(self._retry_btn)
 
-        # Output path
-        out_lbl = label("出力先", "field-label")
+        out_lbl = label("出力先", "fieldLabel")
         out_lbl.setContentsMargins(0, 6, 0, 2)
         lay.addWidget(out_lbl)
 
         self._output_path_lbl = QLabel("-")
         self._output_path_lbl.setWordWrap(True)
         self._output_path_lbl.setStyleSheet(f"""
-            background: {CARD}; border: 1px solid {BORDER}; border-radius: 7px;
-            padding: 9px 12px; color: {TEXT2}; font-size: 16px;
+            background: {CARD}; border: 1px solid {BORDER}; border-radius: 5px;
+            padding: 6px 9px; color: {TEXT2}; font-size: 13px;
         """)
         lay.addWidget(self._output_path_lbl)
 
@@ -258,22 +261,22 @@ class RentMagApp(QMainWindow):
 
         self._stat_labels: dict = {}
         STATS = [
-            ("投入",   "total",   ""),
-            ("通常",   "regular", ""),
-            ("THETA",  "theta",   ""),
-            ("処理済", "done",    ""),
-            ("処理中", "active",  ACCENT2),
-            ("成功",   "success", SUCCESS),
-            ("失敗",   "failed",  ERROR),
+            ("投入",    "total",   ""),
+            ("通常",    "regular", ""),
+            ("THETA",   "theta",   ""),
+            ("処理済",  "done",    ""),
+            ("処理中",  "active",  ACCENT2),
+            ("成功",    "success", SUCCESS),
+            ("失敗",    "failed",  ERROR),
             ("スキップ","skipped", ""),
         ]
         for r, (lbl_t, key, color) in enumerate(STATS):
             lay.addWidget(label(lbl_t, "stat-lbl"), r, 0)
             v = label("0", "stat-num")
             if color:
-                v.setStyleSheet(f"color: {color}; font-size: 18px; font-weight: 700;")
+                v.setStyleSheet(f"color: {color}; font-size: 13px; font-weight: 700;")
             else:
-                v.setStyleSheet("font-size: 18px; font-weight: 600;")
+                v.setStyleSheet("font-size: 13px; font-weight: 600;")
             lay.addWidget(v, r, 1, Qt.AlignRight)
             self._stat_labels[key] = v
 
@@ -284,10 +287,9 @@ class RentMagApp(QMainWindow):
     def _build_right_panel(self) -> QWidget:
         panel = QWidget()
         panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        panel.setStyleSheet(f"background: {BG};")
         lay = QVBoxLayout(panel)
-        lay.setSpacing(6)
-        lay.setContentsMargins(8, 8, 8, 8)
+        lay.setSpacing(8)
+        lay.setContentsMargins(0, 0, 0, 0)
 
         lay.addWidget(self._card_wrap(self._build_progress_section()))
         lay.addWidget(self._card_wrap(self._build_log_section()), 1)
@@ -308,37 +310,36 @@ class RentMagApp(QMainWindow):
     def _build_progress_section(self) -> QWidget:
         w = QWidget()
         w.setStyleSheet("background: transparent;")
-        w.setMinimumHeight(160)
+        w.setMinimumHeight(140)
         lay = QVBoxLayout(w)
-        lay.setContentsMargins(20, 14, 20, 14)
+        lay.setContentsMargins(16, 16, 16, 16)
         lay.setSpacing(6)
 
         # Row: big % + bar + times
         top = QHBoxLayout()
         top.setSpacing(14)
         self._pct_label = label("0%", "pct-label")
-        self._pct_label.setFont(QFont("Segoe UI", 39, QFont.Bold))
-        self._pct_label.setMinimumWidth(108)
+        self._pct_label.setMinimumWidth(72)
         top.addWidget(self._pct_label)
 
         bar_col = QVBoxLayout()
         bar_col.setSpacing(3)
         self._progress_bar = QProgressBar()
         self._progress_bar.setRange(0, 100)
-        self._progress_bar.setFixedHeight(12)
+        self._progress_bar.setFixedHeight(10)
         bar_col.addWidget(self._progress_bar)
 
         times_row = QHBoxLayout()
-        el = label("経過", "field-label")
+        el = label("経過", "fieldLabel")
         times_row.addWidget(el)
         self._elapsed_label = QLabel("00:00:00")
-        self._elapsed_label.setStyleSheet(f"color: {TEXT1}; font-size: 17px; font-weight: 600;")
+        self._elapsed_label.setStyleSheet(f"color: {TEXT1}; font-size: 13px; font-weight: 600;")
         times_row.addWidget(self._elapsed_label)
         times_row.addStretch()
-        eta_l = label("残り", "field-label")
+        eta_l = label("残り", "fieldLabel")
         times_row.addWidget(eta_l)
         self._eta_label = QLabel("-")
-        self._eta_label.setStyleSheet(f"color: {TEXT2}; font-size: 17px;")
+        self._eta_label.setStyleSheet(f"color: {TEXT2}; font-size: 13px;")
         times_row.addWidget(self._eta_label)
         bar_col.addLayout(times_row)
         top.addLayout(bar_col, 1)
@@ -347,11 +348,11 @@ class RentMagApp(QMainWindow):
         # Current file + step
         info = QHBoxLayout()
         self._file_label = QLabel("-")
-        self._file_label.setStyleSheet(f"color: {TEXT2}; font-size: 15px;")
+        self._file_label.setStyleSheet(f"color: {TEXT2}; font-size: 12px;")
         self._file_label.setWordWrap(False)
         info.addWidget(self._file_label, 1)
         self._step_label = QLabel("-")
-        self._step_label.setStyleSheet(f"color: {ACCENT2}; font-size: 15px; font-weight: 600;")
+        self._step_label.setStyleSheet(f"color: {ACCENT2}; font-size: 12px; font-weight: 600;")
         self._step_label.setAlignment(Qt.AlignRight)
         info.addWidget(self._step_label)
         lay.addLayout(info)
@@ -376,21 +377,21 @@ class RentMagApp(QMainWindow):
         w = QWidget()
         w.setStyleSheet("background: transparent;")
         lay = QVBoxLayout(w)
-        lay.setContentsMargins(12, 10, 12, 10)
+        lay.setContentsMargins(16, 16, 16, 16)
         lay.setSpacing(8)
 
         # Header: title + filter
         hdr = QHBoxLayout()
-        hdr.addWidget(label("ログ", "section-title"))
+        hdr.addWidget(label("ログ", "sectionTitle"))
         hdr.addStretch()
         self._log_filter = QComboBox()
         self._log_filter.addItems(["すべて", "INFO", "WARN", "ERROR"])
         self._log_filter.setMaximumWidth(100)
         self._log_filter.setStyleSheet(
-            "QComboBox { font-size: 13px; min-height: 0; padding: 3px 8px;"
+            "QComboBox { font-size: 12px; min-height: 0; padding: 3px 8px;"
             " border: 1px solid #D4DAE1; border-radius: 5px; background: white; }"
             "QComboBox::drop-down { border: none; width: 12px; }"
-            "QComboBox QAbstractItemView { background: white; font-size: 13px; }"
+            "QComboBox QAbstractItemView { background: white; font-size: 12px; }"
         )
         self._log_filter.currentTextChanged.connect(self._rebuild_log_table)
         hdr.addWidget(self._log_filter)
@@ -415,7 +416,7 @@ class RentMagApp(QMainWindow):
         lf_lay.addWidget(self._log_table)
         lay.addWidget(log_frame, 1)
 
-        # Footer buttons with visible borders
+        # Footer buttons
         foot = QHBoxLayout()
         foot.setSpacing(6)
         b1 = btn("ログを保存", "btn-secondary"); b1.clicked.connect(self._save_log)
@@ -430,15 +431,15 @@ class RentMagApp(QMainWindow):
         w = QWidget()
         w.setStyleSheet("background: transparent;")
         lay = QVBoxLayout(w)
-        lay.setContentsMargins(16, 10, 16, 10)
+        lay.setContentsMargins(16, 16, 16, 16)
         lay.setSpacing(6)
 
-        lay.addWidget(label("プレビュー", "section-title"))
+        lay.addWidget(label("プレビュー", "sectionTitle"))
 
         content_row = QHBoxLayout()
         content_row.setSpacing(12)
 
-        # Left: three image columns grouped tightly
+        # Left: three image columns
         images_widget = QWidget()
         images_widget.setStyleSheet("background: transparent;")
         images_lay = QHBoxLayout(images_widget)
@@ -448,9 +449,9 @@ class RentMagApp(QMainWindow):
         def _col(title: str, attr: str):
             col = QVBoxLayout()
             col.setSpacing(4)
-            lbl = label(title, "field-label")
+            lbl = label(title, "fieldLabel")
             lbl.setAlignment(Qt.AlignCenter)
-            lbl.setStyleSheet(f"color: {TEXT1}; font-weight: 800; font-size: 22px;")
+            lbl.setStyleSheet(f"color: {TEXT1}; font-weight: 700; font-size: 13px;")
             col.addWidget(lbl)
             img = PreviewImage(title)
             col.addWidget(img)
@@ -466,40 +467,40 @@ class RentMagApp(QMainWindow):
         # Right: ファイル情報 panel
         info_frame = QFrame()
         info_frame.setObjectName("file-info-panel")
-        info_frame.setMinimumWidth(200)
-        info_frame.setMaximumWidth(360)
+        info_frame.setMinimumWidth(180)
+        info_frame.setMaximumWidth(280)
         info_frame.setStyleSheet(f"""
             QFrame#file-info-panel {{
                 background: #F3F5F7;
                 border: 1px solid {BORDER};
-                border-radius: 4px;
+                border-radius: 8px;
             }}
         """)
         info_inner = QVBoxLayout(info_frame)
         info_inner.setContentsMargins(12, 10, 12, 10)
-        info_inner.setSpacing(8)
+        info_inner.setSpacing(6)
 
-        info_hdr = label("ファイル情報", "section-title")
+        info_hdr = label("ファイル情報", "sectionTitle")
         info_hdr.setStyleSheet(
-            f"color: {ACCENT}; font-size: 18px; font-weight: 700;"
-            f"border-bottom: 1px solid {BORDER}; padding-bottom: 8px;"
+            f"color: {ACCENT}; font-size: 13px; font-weight: 700;"
+            f" border-bottom: 1px solid {BORDER}; padding-bottom: 6px;"
         )
         info_inner.addWidget(info_hdr)
 
         info_grid = QGridLayout()
         info_grid.setHorizontalSpacing(12)
-        info_grid.setVerticalSpacing(9)
-        info_grid.setColumnMinimumWidth(0, 90)
+        info_grid.setVerticalSpacing(6)
+        info_grid.setColumnMinimumWidth(0, 70)
         info_grid.setColumnStretch(1, 1)
         self._file_info: dict = {}
         for r, (lt, key) in enumerate([
             ("ファイル名", "filename"), ("種別",  "type"),
             ("解像度",    "resolution"), ("向き", "orientation"), ("サイズ", "size"),
         ]):
-            info_grid.addWidget(label(lt, "field-label"), r, 0, Qt.AlignTop)
+            info_grid.addWidget(label(lt, "fieldLabel"), r, 0, Qt.AlignTop)
             v = label("-")
             v.setWordWrap(True)
-            v.setStyleSheet(f"color: {TEXT1}; font-size: 17px; font-weight: 600;")
+            v.setStyleSheet(f"color: {TEXT1}; font-size: 13px; font-weight: 600;")
             v.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             info_grid.addWidget(v, r, 1)
             self._file_info[key] = v
@@ -550,10 +551,10 @@ class RentMagApp(QMainWindow):
     def _refresh_conn_label(self) -> None:
         if self.settings.get("last_input_dir") and self.settings.get("last_logo_path"):
             self._conn_label.setText("設定済み")
-            self._conn_label.setStyleSheet("color: rgba(180,255,180,0.75); font-size: 15px;")
+            self._conn_label.setStyleSheet("color: rgba(180,255,180,0.75); font-size: 13px;")
         else:
             self._conn_label.setText("ファイル未設定")
-            self._conn_label.setStyleSheet("color: rgba(255,200,100,0.85); font-size: 15px;")
+            self._conn_label.setStyleSheet("color: rgba(255,200,100,0.85); font-size: 13px;")
 
     # ── Dialogs ───────────────────────────────────────────────────────────────
 
@@ -616,20 +617,16 @@ class RentMagApp(QMainWindow):
             self._start_btn.setText("⏸  処理中…")
             self._start_btn.setEnabled(False)
             self._start_btn.setStyleSheet(
-                "QPushButton { background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
-                " stop:0 #3F8A4D, stop:1 #2F7A3E); color: white; border: none;"
-                " border-radius: 10px; padding: 9px 24px;"
-                " font-size: 21px; font-weight: 700; }"
+                "QPushButton { background: #3F8A4D; color: white; border: none;"
+                " border-radius: 7px; min-height: 40px; font-size: 15px; font-weight: 700; }"
             )
         else:
             self._start_btn.setText("▶  処理開始")
             self._start_btn.setEnabled(True)
             self._start_btn.setStyleSheet(
-                f"QPushButton {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
-                f" stop:0 {SUCCESS}, stop:1 #2F7A3E); color: white; border: none;"
-                f" border-radius: 10px; padding: 9px 24px; font-size: 21px; font-weight: 700; }}"
-                f"QPushButton:hover {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
-                f" stop:0 #2F7A3E, stop:1 #265F32); }}"
+                "QPushButton { background: #2F7A3E; color: white; border: none;"
+                " border-radius: 7px; min-height: 40px; font-size: 15px; font-weight: 700; }"
+                "QPushButton:hover { background: #3F8A4D; }"
             )
         self._pause_btn.setEnabled(running)
         self._stop_btn.setEnabled(running)
@@ -716,11 +713,11 @@ class RentMagApp(QMainWindow):
         row = self._log_table.rowCount()
         self._log_table.insertRow(row)
         if level == "ERROR":
-            bg, fg_lv, fg_m = QColor(ERROR_BG), QColor(ERROR),   QColor(ERROR)
+            bg, fg_lv, fg_m = QColor(ERROR_BG), QColor(ERROR),  QColor(ERROR)
         elif level == "WARN":
-            bg, fg_lv, fg_m = QColor(WARN_BG),  QColor(WARN),    QColor(TEXT1)
+            bg, fg_lv, fg_m = QColor(WARN_BG),  QColor(WARN),   QColor(TEXT1)
         else:
-            bg, fg_lv, fg_m = QColor(CARD),      QColor(TEXT2),   QColor(TEXT1)
+            bg, fg_lv, fg_m = QColor(CARD),      QColor(TEXT2),  QColor(TEXT1)
         for col, (text, fg) in enumerate([(ts, QColor(MUTED)), (level, fg_lv), (msg, fg_m)]):
             item = QTableWidgetItem(text)
             item.setBackground(QBrush(bg))
