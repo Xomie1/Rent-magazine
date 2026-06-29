@@ -37,18 +37,18 @@ _SCOPES = [
 ]
 
 # Column header constants
-COL_MGMT     = "Management Number"
-COL_TYPE     = "Type"
-COL_PROPERTY = "Property Name"
-COL_BUILDING = "Building"
-COL_ROOM     = "Room/Unit"
-COL_CITY     = "City/Ward"
-COL_HIRAGANA = "Hiragana Group"
-COL_STATION  = "Nearest Station"
-COL_WP_ID    = "WordPress Post ID"
+COL_MGMT     = "管理番号"
+COL_TYPE     = "種別"
+COL_PROPERTY = "物件名"
+COL_BUILDING = "棟"
+COL_ROOM     = "号室/区画"
+COL_CITY     = "所在地"
+COL_HIRAGANA = "ひらがな"
+COL_STATION  = "最寄駅"
+COL_WP_ID    = "WordPress投稿ID"
 COL_WP_URL   = "WordPress URL"
-COL_STATUS   = "Status"
-COL_NOTES    = "Notes"
+COL_STATUS   = "ステータス"
+COL_NOTES    = "備考"
 
 REQUIRED_COLS = [COL_MGMT, COL_PROPERTY, COL_ROOM, COL_CITY]
 
@@ -137,7 +137,7 @@ class PropertyMasterClient:
                     "Sheet is missing required column(s):\n  " + "\n  ".join(missing)
                 )
 
-        self._creds_path = credentials_path
+        self._creds_path = str(credentials) if credentials else ""
         self._sheet_name = sheet_name
         self._connected  = True
 

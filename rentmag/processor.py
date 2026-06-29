@@ -171,6 +171,7 @@ def process_images(
     progress_callback: Optional[ProgressCallback] = None,
     step_callback:     Optional[StepCallback] = None,
     retry_files:       Optional[List] = None,
+    stop_check:        Optional[Callable[[], bool]] = None,
 ) -> dict:
     """
     Process a batch of images and return:
@@ -204,6 +205,8 @@ def process_images(
         print(f"  Images   : {len(images)}\n{'─'*56}\n")
 
     for i, img_path in enumerate(images, 1):
+        if stop_check is not None and stop_check():
+            break
         tmp_path = ""
         try:
             if verbose:

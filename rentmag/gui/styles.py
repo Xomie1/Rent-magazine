@@ -89,15 +89,15 @@ QPushButton {{
 
 /* run / start button */
 QPushButton#runBtn {{
-    background: #2F7A3E;
+    background: #2563EB;
     color: #fff;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     border: none;
-    border-radius: 7px;
-    min-height: 40px;
+    border-radius: 8px;
+    min-height: 44px;
 }}
-QPushButton#runBtn:hover    {{ background: #3F8A4D; }}
+QPushButton#runBtn:hover    {{ background: #1D4ED8; }}
 QPushButton#runBtn:disabled {{ background: #BDBDBD; color: white; border: none; }}
 
 QPushButton#btn-pause {{

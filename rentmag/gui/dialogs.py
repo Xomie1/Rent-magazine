@@ -42,6 +42,7 @@ class FileSettingsDialog(QDialog):
         self.setWindowTitle("ファイル・スプレッドシート設定")
         self.setMinimumWidth(520)
         self.setModal(True)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setStyleSheet(QSS)
 
         self._build()
@@ -94,7 +95,20 @@ class FileSettingsDialog(QDialog):
         lay = QVBoxLayout(grp)
         lay.setSpacing(8)
 
-        # Sheet name + connect (credentials are embedded — no file picker needed)
+        # Credentials file
+        r_creds = QHBoxLayout()
+        r_creds.addWidget(QLabel("認証情報ファイル:"))
+        self.creds_edit = QLineEdit()
+        self.creds_edit.setReadOnly(True)
+        self.creds_edit.setPlaceholderText("サービスアカウントの JSON ファイル")
+        r_creds.addWidget(self.creds_edit)
+        b_creds = btn("参照...", "btn-secondary")
+        b_creds.setFixedWidth(58)
+        b_creds.clicked.connect(self._pick_creds)
+        r_creds.addWidget(b_creds)
+        lay.addLayout(r_creds)
+
+        # Sheet name + connect
         r_sheet = QHBoxLayout()
         r_sheet.addWidget(QLabel("シート名:"))
         self.sheet_edit = QLineEdit()
@@ -140,6 +154,12 @@ class FileSettingsDialog(QDialog):
 
     # ── File pickers ───────────────────────────────────────────────────────────
 
+    def _pick_creds(self) -> None:
+        f, _ = QFileDialog.getOpenFileName(
+            self, "認証情報ファイル", self.settings.get("credentials_path"), "JSON (*.json)")
+        if f:
+            self.creds_edit.setText(f)
+
     def _pick_input(self) -> None:
         d = QFileDialog.getExistingDirectory(self, "投入フォルダ", self.settings.get("last_input_dir"))
         if d: self.input_edit.setText(d)
@@ -155,10 +175,14 @@ class FileSettingsDialog(QDialog):
     # ── Sheets ─────────────────────────────────────────────────────────────────
 
     def _connect(self) -> None:
+        creds_path = self.creds_edit.text().strip()
+        if not creds_path:
+            self._set_status("認証情報ファイルを選択してください", ERROR)
+            return
         sheet = self.sheet_edit.text().strip() or "物件管理番号マスター"
         try:
             client = PropertyMasterClient()
-            client.connect(sheet)          # uses embedded credentials
+            client.connect(sheet, credentials=creds_path)
             self._client = client
             props = self._client.property_names()
             self.prop_combo.clear()
@@ -210,6 +234,7 @@ class FileSettingsDialog(QDialog):
         self.input_edit.setText(s.get("last_input_dir"))
         self.logo_edit.setText(s.get("last_logo_path"))
         self.output_edit.setText(s.get("last_output_dir"))
+        self.creds_edit.setText(s.get("credentials_path"))
         self.sheet_edit.setText(s.get("sheet_name"))
 
     def _accept(self) -> None:
@@ -225,10 +250,11 @@ class FileSettingsDialog(QDialog):
             return
 
         s = self.settings
-        s.set("last_input_dir",  self.input_edit.text().strip())
-        s.set("last_logo_path",  self.logo_edit.text().strip())
-        s.set("last_output_dir", self.output_edit.text().strip())
-        s.set("sheet_name",      self.sheet_edit.text().strip())
+        s.set("last_input_dir",    self.input_edit.text().strip())
+        s.set("last_logo_path",    self.logo_edit.text().strip())
+        s.set("last_output_dir",   self.output_edit.text().strip())
+        s.set("credentials_path",  self.creds_edit.text().strip())
+        s.set("sheet_name",        self.sheet_edit.text().strip())
         s.save()
         self.accept()
 

@@ -47,6 +47,8 @@ class RentMagApp(QMainWindow):
         self._paused:       bool                       = False
         self._failed_files: list                       = []
         self._log_rows:     list                       = []
+        self._sheets_client                            = None
+        self._sheets_mode:  bool                       = False
 
         self.setWindowTitle("RentMag")
         self.setMinimumSize(1024, 680)
@@ -69,6 +71,7 @@ class RentMagApp(QMainWindow):
         vl.addLayout(body, 1)
 
         self._load_property_fields()
+        self._set_running(False)
 
     # ── Top bar ───────────────────────────────────────────────────────────────
 
@@ -115,7 +118,17 @@ class RentMagApp(QMainWindow):
         lay.setContentsMargins(14, 14, 14, 14)
         lay.setSpacing(8)
 
-        lay.addWidget(self._panel_section("物件情報"))
+        prop_hdr = QHBoxLayout()
+        prop_hdr.setSpacing(6)
+        prop_hdr.addWidget(self._panel_section("物件情報"))
+        self._manual_badge = QLabel("手動入力")
+        self._manual_badge.setStyleSheet(
+            "background: #E0E7EF; color: #4A5568; font-size: 10px;"
+            " font-weight: 600; border-radius: 4px; padding: 2px 7px;"
+        )
+        prop_hdr.addWidget(self._manual_badge)
+        prop_hdr.addStretch()
+        lay.addLayout(prop_hdr)
         lay.addWidget(self._build_property_form())
         lay.addWidget(self._panel_sep())
 
@@ -174,9 +187,43 @@ class RentMagApp(QMainWindow):
             self._pf[key] = f
 
         row("管理番号",         "prop_mgmt",  "RM-R000001")
-        row("物件名",           "prop_name",  "物件名")
+
+        # prop_name — stacked: manual edit (shown by default) + sheets combo (hidden)
+        lbl_name = QLabel("物件名")
+        lbl_name.setObjectName("fieldLabel")
+        lbl_name.setFixedWidth(100)
+        self._name_edit  = prop_field("物件名")
+        self._name_combo = QComboBox()
+        self._name_combo.hide()
+        name_wrap = QWidget()
+        name_wrap.setStyleSheet("background: transparent;")
+        nwl = QVBoxLayout(name_wrap)
+        nwl.setContentsMargins(0, 0, 0, 0)
+        nwl.setSpacing(0)
+        nwl.addWidget(self._name_edit)
+        nwl.addWidget(self._name_combo)
+        lay.addRow(lbl_name, name_wrap)
+        self._pf["prop_name"] = self._name_edit
+
         row("棟",               "prop_build", "北棟")
-        row("号室 / 区画",      "prop_room",  "101")
+
+        # prop_room — stacked: manual edit (shown by default) + sheets combo (hidden)
+        lbl_room = QLabel("号室 / 区画")
+        lbl_room.setObjectName("fieldLabel")
+        lbl_room.setFixedWidth(100)
+        lbl_room.setWordWrap(True)
+        self._room_edit  = prop_field("101")
+        self._room_combo = QComboBox()
+        self._room_combo.hide()
+        room_wrap = QWidget()
+        room_wrap.setStyleSheet("background: transparent;")
+        rwl = QVBoxLayout(room_wrap)
+        rwl.setContentsMargins(0, 0, 0, 0)
+        rwl.setSpacing(0)
+        rwl.addWidget(self._room_edit)
+        rwl.addWidget(self._room_combo)
+        lay.addRow(lbl_room, room_wrap)
+        self._pf["prop_room"] = self._room_edit
         row("表示名",           "prop_disp",  "")
         row("種別",             "prop_type",  "住居")
         row("所在地",           "prop_addr",  "市区町村")
@@ -205,27 +252,10 @@ class RentMagApp(QMainWindow):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(6)
 
-        # Start / Pause / Stop
-        row1 = QHBoxLayout()
-        row1.setSpacing(8)
-
         self._start_btn = btn("▶  処理開始", "runBtn")
-        self._start_btn.setMinimumHeight(40)
-        self._start_btn.clicked.connect(lambda _: self._start_processing())
-        row1.addWidget(self._start_btn, 1)
-
-        self._pause_btn = btn("⏸", "btn-pause")
-        self._pause_btn.setFixedSize(42, 42)
-        self._pause_btn.setEnabled(False)
-        self._pause_btn.clicked.connect(self._toggle_pause)
-        row1.addWidget(self._pause_btn)
-
-        self._stop_btn = btn("■", "btn-stop")
-        self._stop_btn.setFixedSize(42, 42)
-        self._stop_btn.setEnabled(False)
-        self._stop_btn.clicked.connect(self._stop_processing)
-        row1.addWidget(self._stop_btn)
-        lay.addLayout(row1)
+        self._start_btn.setMinimumHeight(44)
+        self._start_btn.clicked.connect(self._on_action_clicked)
+        lay.addWidget(self._start_btn)
 
         self._retry_btn = btn("失敗を再実行", "btn-secondary")
         self._retry_btn.setEnabled(False)
@@ -563,6 +593,9 @@ class RentMagApp(QMainWindow):
         if dlg.exec_() == QDialog.Accepted:
             self._output_path_lbl.setText(self.settings.get("last_output_dir") or "-")
             self._refresh_conn_label()
+            if hasattr(dlg, '_client') and dlg._client and dlg._client.is_connected:
+                self._sheets_client = dlg._client
+                self._activate_sheets_mode()
 
     def _open_output_folder(self) -> None:
         out = self.settings.get("last_output_dir")
@@ -570,6 +603,69 @@ class RentMagApp(QMainWindow):
             subprocess.Popen(f'explorer "{out}"')
         else:
             QMessageBox.information(self, "情報", "出力フォルダが設定されていません。")
+
+    # ── Sheets mode ───────────────────────────────────────────────────────────
+
+    def _activate_sheets_mode(self) -> None:
+        self._sheets_mode = True
+
+        prop_names = self._sheets_client.property_names()
+        self._name_combo.blockSignals(True)
+        self._name_combo.clear()
+        self._name_combo.addItems(prop_names)
+        self._name_combo.blockSignals(False)
+
+        try:
+            self._name_combo.currentTextChanged.disconnect()
+        except Exception:
+            pass
+        self._name_combo.currentTextChanged.connect(self._on_sheet_prop_changed)
+
+        self._name_edit.hide()
+        self._name_combo.show()
+        self._manual_badge.setVisible(False)
+
+        if prop_names:
+            self._name_combo.setCurrentIndex(0)
+            self._on_sheet_prop_changed(prop_names[0])
+
+    def _on_sheet_prop_changed(self, prop: str) -> None:
+        self._pf["prop_name"].setText(prop)
+        if not (self._sheets_client and prop):
+            return
+        try:
+            rooms = self._sheets_client.rooms_for(prop)
+            self._room_combo.blockSignals(True)
+            self._room_combo.clear()
+            self._room_combo.addItems(rooms)
+            self._room_combo.blockSignals(False)
+            self._room_edit.hide()
+            self._room_combo.show()
+
+            try:
+                self._room_combo.currentTextChanged.disconnect()
+            except Exception:
+                pass
+            self._room_combo.currentTextChanged.connect(self._on_sheet_room_changed)
+
+            if rooms:
+                self._room_combo.setCurrentIndex(0)
+                self._on_sheet_room_changed(rooms[0])
+        except Exception:
+            pass
+
+    def _on_sheet_room_changed(self, room: str) -> None:
+        prop = self._name_combo.currentText()
+        self._pf["prop_room"].setText(room)
+        if not (self._sheets_client and prop and room):
+            return
+        try:
+            self._pf["prop_mgmt"].setText(self._sheets_client.management_number(prop, room))
+            self._pf["prop_addr"].setText(self._sheets_client.city(prop, room))
+            self._pf["prop_hira"].setText(self._sheets_client.hiragana(prop, room))
+            self._pf["prop_sta"].setText(self._sheets_client.station(prop, room))
+        except Exception:
+            pass
 
     # ── Processing ────────────────────────────────────────────────────────────
 
@@ -612,25 +708,32 @@ class RentMagApp(QMainWindow):
             "station":           pf["prop_sta"].text().strip(),
         }
 
+    def _on_action_clicked(self) -> None:
+        if self._worker and self._worker.isRunning():
+            self._stop_processing()
+        else:
+            self._start_processing()
+
     def _set_running(self, running: bool) -> None:
         if running:
-            self._start_btn.setText("⏸  処理中…")
-            self._start_btn.setEnabled(False)
+            self._start_btn.setText("⏹  停止")
             self._start_btn.setStyleSheet(
-                "QPushButton { background: #3F8A4D; color: white; border: none;"
-                " border-radius: 7px; min-height: 40px; font-size: 15px; font-weight: 700; }"
+                "QPushButton { background: #DC2626; color: white; border: none;"
+                " border-radius: 8px; min-height: 44px; font-size: 16px; font-weight: 700; }"
+                "QPushButton:hover { background: #B91C1C; }"
             )
         else:
             self._start_btn.setText("▶  処理開始")
-            self._start_btn.setEnabled(True)
             self._start_btn.setStyleSheet(
-                "QPushButton { background: #2F7A3E; color: white; border: none;"
-                " border-radius: 7px; min-height: 40px; font-size: 15px; font-weight: 700; }"
-                "QPushButton:hover { background: #3F8A4D; }"
+                "QPushButton { background: #2563EB; color: white; border: none;"
+                " border-radius: 8px; min-height: 44px; font-size: 16px; font-weight: 700; }"
+                "QPushButton:hover { background: #1D4ED8; }"
             )
-        self._pause_btn.setEnabled(running)
-        self._stop_btn.setEnabled(running)
         self._retry_btn.setEnabled(not running and bool(self._failed_files))
+
+    def _reset_steps(self) -> None:
+        for b in self._step_badges:
+            b.setState("pending")
 
     def _reset_ui(self) -> None:
         self._clear_log()
@@ -659,7 +762,6 @@ class RentMagApp(QMainWindow):
         self._reset_ui()
         self._failed_files = []
         self._paused = False
-        self._pause_btn.setText("⏸")
         self._set_running(True)
 
         self._worker = ProcessingWorker(self._build_params(), retry_files=retry_files)
@@ -672,29 +774,13 @@ class RentMagApp(QMainWindow):
         self._worker.error_signal.connect(self._on_error)
         self._worker.start()
 
-    def _toggle_pause(self) -> None:
-        if not self._worker:
-            return
-        ts = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-        if self._paused:
-            self._worker.resume()
-            self._paused = False
-            self._pause_btn.setText("⏸")
-            self._append_log(ts, "INFO", "処理を再開しました。")
-        else:
-            self._worker.pause()
-            self._paused = True
-            self._pause_btn.setText("▶")
-            self._append_log(ts, "INFO", "処理を一時停止しました。")
-
     def _stop_processing(self) -> None:
         if not self._worker:
             return
-        if QMessageBox.question(self, "停止確認", "処理を停止しますか？",
-                                QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
-            if self._paused:
-                self._worker.resume()
-            self._worker.stop()
+        if self._paused:
+            self._worker.resume()
+        self._worker.stop()
+        self._set_running(False)
 
     def _retry_failed(self) -> None:
         if self._failed_files:
@@ -818,13 +904,17 @@ class RentMagApp(QMainWindow):
         self._set_running(False)
         self._failed_files = [r["file"] for r in results.get("failed", [])]
         self._retry_btn.setEnabled(bool(self._failed_files))
-        self._pct_label.setText("100%")
-        self._progress_bar.setValue(100)
-        for b in self._step_badges:
-            b.setState("done")
         n_ok  = len(results.get("processed", []))
         n_err = len(results.get("failed",    []))
-        self._file_label.setText(f"完了 — 成功 {n_ok}件 / 失敗 {n_err}件")
+        if results.get("stopped"):
+            self._reset_steps()
+            self._file_label.setText(f"中断 — 処理済 {n_ok}件 / 失敗 {n_err}件")
+        else:
+            self._pct_label.setText("100%")
+            self._progress_bar.setValue(100)
+            for b in self._step_badges:
+                b.setState("done")
+            self._file_label.setText(f"完了 — 成功 {n_ok}件 / 失敗 {n_err}件")
         self._eta_label.setText("00:00:00")
 
     def _on_error(self, message: str) -> None:

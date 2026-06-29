@@ -172,12 +172,17 @@ class ProcessingWorker(QThread):
             progress_callback=self._on_file,
             step_callback=self._on_step,
             retry_files=self.retry_files,
+            stop_check=self._stop.is_set,
         )
 
         self._stats["active"] = 0
         self.stats_signal.emit(dict(self._stats))
 
-        n_ok  = len(results["processed"])
-        n_err = len(results["failed"])
-        self._log("INFO", f"処理完了: 成功 {n_ok}件、失敗 {n_err}件")
+        if self._stop.is_set():
+            results["stopped"] = True
+            self._log("INFO", "処理を中断しました")
+        else:
+            n_ok = len(results["processed"])
+            n_err = len(results["failed"])
+            self._log("INFO", f"処理完了: 成功 {n_ok}件、失敗 {n_err}件")
         self.finished_signal.emit(results)
